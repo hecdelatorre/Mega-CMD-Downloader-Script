@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Function to validate Mega.nz links
+validate_mega_link() {
+  local link=$1
+  if [[ $link =~ ^https://mega\.nz ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Ask user for the download directory
 read -p "Enter the download directory (default: $HOME/Downloads): " DOWNLOAD_DIR
 
@@ -30,8 +40,16 @@ LINKS=()
 # Loop to input links based on the number provided
 for ((i=1; i<=$NUM_LINKS; i++))
 do
-  read -p "Enter link $i: " LINK
-  LINKS+=("$LINK")
+  # Ask user for link and validate
+  while true; do
+    read -p "Enter link $i: " LINK
+    if validate_mega_link "$LINK"; then
+      LINKS+=("$LINK")
+      break
+    else
+      echo "Error: Invalid Mega.nz link. Please enter a valid Mega.nz link."
+    fi
+  done
 done
 
 # Download files
