@@ -22,9 +22,6 @@ if [[ ! -d $DOWNLOAD_DIR ]]; then
   exit 1
 fi
 
-# Change to the download directory
-cd "$DOWNLOAD_DIR" || exit 1
-
 # Ask user for the number of links to download
 read -p "Enter the number of links to download: " NUM_LINKS
 
@@ -57,6 +54,6 @@ COUNT=0
 for LINK in "${LINKS[@]}"
 do
   echo "File $((COUNT+=1))"
-  mega-get --ignore-quota-warn "$LINK"
+  mega-get --ignore-quota-warn "$LINK" "$DOWNLOAD_DIR"
   echo "End $(date +"%H:%M:%S - %d/%m/%Y")"
 done
