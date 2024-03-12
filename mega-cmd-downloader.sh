@@ -10,6 +10,16 @@ validate_mega_link() {
   fi
 }
 
+# Function to display elapsed time while downloads are in progress
+display_elapsed_time() {
+  local elapsed=0
+  while [ "$(jobs -r | wc -l)" -gt 0 ]; do
+    sleep 1
+    elapsed=$((elapsed + 1))
+    printf "\rElapsed time: %02d:%02d:%02d" $((elapsed/3600)) $((elapsed%3600/60)) $((elapsed%60))
+  done
+}
+
 # Ask user for the download directory
 read -p "Enter the download directory (default: $HOME/Downloads): " DOWNLOAD_DIR
 
@@ -21,6 +31,25 @@ if [[ ! -d $DOWNLOAD_DIR ]]; then
   echo "Error: The specified download directory does not exist."
   exit 1
 fi
+
+# Ask user if they want to create a subdirectory
+read -p "Do you want to create a subdirectory for the downloads? (y/n): " CREATE_SUBDIR
+
+# Check user's response and handle accordingly
+case $CREATE_SUBDIR in
+  y|Y)
+    read -p "Enter the name of the subdirectory: " SUBDIR_NAME
+    DOWNLOAD_DIR="$DOWNLOAD_DIR/$SUBDIR_NAME"
+    mkdir -p "$DOWNLOAD_DIR"
+    ;;
+  n|N)
+    # Keep original download directory
+    ;;
+  *)
+    echo "Error: Please enter 'y' or 'n'."
+    exit 1
+    ;;
+esac
 
 # Ask user for the number of links to download
 read -p "Enter the number of links to download: " NUM_LINKS
@@ -50,10 +79,15 @@ do
 done
 
 # Download files
-COUNT=0
 for LINK in "${LINKS[@]}"
 do
-  echo "File $((COUNT+=1))"
-  mega-get --ignore-quota-warn "$LINK" "$DOWNLOAD_DIR"
-  echo "End $(date +"%H:%M:%S - %d/%m/%Y")"
+  mega-get --ignore-quota-warn "$LINK" "$DOWNLOAD_DIR" > /dev/null 2>&1 &
 done
+
+# Display elapsed time while downloads are in progress
+display_elapsed_time
+
+# Wait for all background downloads to finish
+wait
+
+echo -e "\nEnd $(date +"%H:%M:%S - %d/%m/%Y")"
